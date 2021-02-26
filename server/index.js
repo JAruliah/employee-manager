@@ -7,10 +7,14 @@ const express = require('express');
 const path = require('path')
 const cors = require('cors')
 const cookSession = require('cookie-session')
+//importing express validator 
+const { body, validationResult } = require('express-validator');
 
 // Importing our Login Service Used With the POST Login Route
-const loginService = require('./services/loginService')
-
+const loginService = require('./services/loginService');
+const { getFileContents, writeFileContents } = require('./services/fileService');
+//importing uuid to give each user a unique id 
+const { v4: uuidv4 } = require('uuid');
 
 
 // create an instance of express
@@ -63,6 +67,36 @@ app.use(express.static(path.join(__dirname, "../client"), {extensions: ["html", 
            res.redirect('/login')
           }
  })
+
+ //signup page
+ app.post(
+   '/signup',
+   // username must be an email
+   body('email').isEmail(),
+   // password must be at least 5 chars long
+   body('password').isLength({ min: 5 }),
+   (req, res) => {
+     // Finds the validation errors in this request and wraps them in an object with handy functions
+     const errors = validationResult(req);
+     if (!errors.isEmpty()) {
+       return res.status(400).json({ errors: errors.array() });
+     }
+    else{
+      uniqueID = uuidv4();
+      const credentials = {
+        name:req.body.fullname,
+        email:req.body.email,
+        password:req.body.password,
+        id:uniqueID
+      
+      }
+      writeFileContents('../data/users.json',credentials)
+      
+      res.redirect('/login')
+      
+    }})
+
+ 
 
  app.get('/login', (req, res)=>{
    // user template placed inside the views directory
