@@ -14,7 +14,7 @@
   "keywords": [
     "none"
   ],
-  "author": "james foley",
+  "author": "joanthan aruliah",
   "license": "MIT",
   "dependencies": {
     "cookie-session": "^1.4.0",
