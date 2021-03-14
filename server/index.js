@@ -7,14 +7,10 @@ const express = require('express');
 const path = require('path')
 const cors = require('cors')
 const cookSession = require('cookie-session')
-//importing express validator 
-const { body, validationResult } = require('express-validator');
 
 // Importing our Login Service Used With the POST Login Route
-const loginService = require('./services/loginService');
-const { getFileContents, writeFileContents } = require('./services/fileService');
-//importing uuid to give each user a unique id 
-const { v4: uuidv4 } = require('uuid');
+const loginService = require('./services/loginService')
+const departmentRoutes = require('./routes/departmentRouter')
 
 
 // create an instance of express
@@ -25,14 +21,15 @@ const app = express()
 // we can set configuration variables for the application.
 // never upload to git...
 const PORT =  process.env.PORT || 5000 
-
+ 
  
 // Middleware For Cross Origin Resource SHaring
 app.use(cors())
 
 //To get access to the name value pairs send in the message Body of POST Request.
- app.use(express.urlencoded({extended:true}))
+ app.use(express.urlencoded({extended:false}))
  app.use(express.json())
+ app.use(express.raw())
 
  // Session Middleware
  app.use(cookSession({
@@ -49,7 +46,7 @@ app.use(cors())
 // second parameter is an configuration object of how we want
 // the static file server to run.
  
-app.use(express.static(path.join(__dirname, "../client"), {extensions: ["html", 'htm']})
+app.use(express.static(path.join(__dirname, `../www`), {extensions: ["html", 'htm']})
 );
 
  
@@ -67,36 +64,6 @@ app.use(express.static(path.join(__dirname, "../client"), {extensions: ["html", 
            res.redirect('/login')
           }
  })
-
- //signup page
- app.post(
-   '/signup',
-   // username must be an email
-   body('email').isEmail(),
-   // password must be at least 5 chars long
-   body('password').isLength({ min: 5 }),
-   (req, res) => {
-     // Finds the validation errors in this request and wraps them in an object with handy functions
-     const errors = validationResult(req);
-     if (!errors.isEmpty()) {
-       return res.status(400).json({ errors: errors.array() });
-     }
-    else{
-      uniqueID = uuidv4();
-      const credentials = {
-        name:req.body.fullname,
-        email:req.body.email,
-        password:req.body.password,
-        id:uniqueID
-      
-      }
-      writeFileContents('../data/users.json',credentials)
-      
-      res.redirect('/login')
-      
-    }})
-
- 
 
  app.get('/login', (req, res)=>{
    // user template placed inside the views directory
@@ -134,22 +101,15 @@ app.use(express.static(path.join(__dirname, "../client"), {extensions: ["html", 
        }
   })
     
- 
- app.post('/login', (req, res)=>{
-   // POST name value pairs in body request
-   const credentials = {
-     email:req.body.email,
-     password:req.body.password
-    }
-    
-    
-    const isValidUser = loginService.authenticate(credentials)
-   
-    res.end()
- 
+ app.get('/users', (req, res)=>{
+     // read using the file service
+     // return as json
+     const date = fileService.readFile('../data/user.json')
+     res.json(data)
  })
 
- 
+
+ app.use('/api/departments', departmentRoutes())
 
 // Final Middleware 
 // Catch all for any request not handled while express was
